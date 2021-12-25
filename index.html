@@ -1,109 +1,135 @@
-<div>Teachable Machine Pose Model</div>
-<meta charset="UTF-8">
-<button type="button" onclick="init()">Start</button>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css" >
+        <title>Document</title>
+    </head>
+    <body>
+        <h1>筋肉褒めるマン</h1>
+        <meta charset="UTF-8">
 
-<button type="button" onclick="speak('はい、サイドーチェストぉー')">test</button>
-
-<div><canvas id="canvas"></canvas></div>
-<div id="label-container"></div>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-<script type="text/javascript">
-    const URL = "./my_model/";
-    let model, webcam, ctx, labelContainer, maxPredictions;
-    var time = 0;
-
-
-    async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-
-        model = await tmPose.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        // Convenience function to setup a webcam
-        const size = 500;
-        const flip = true; // whether to flip the webcam
-        webcam = new tmPose.Webcam(size, size, flip); // width, height, flip
-        await webcam.setup(); // request access to the webcam
-        await webcam.play();
-        window.requestAnimationFrame(loop);
-
-        // append/get elements to the DOM
-        const canvas = document.getElementById("canvas");
-        canvas.width = size; canvas.height = size;
-        ctx = canvas.getContext("2d");
-        labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) { // and class labels
-            labelContainer.appendChild(document.createElement("div"));
-        }
-
+        <div class="start-button">
+            <button type="button" id="start-button1" onclick="init()">Start</button>
+        </div>
         
-    }
+        <div class="video">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div class="labels" id="label-container"></div>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+        <script type="text/javascript">
 
-    async function loop(timestamp) {
-        webcam.update(); // update the webcam frame
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+            const URL = "./my_model/";
+            let model, webcam, ctx, labelContainer, maxPredictions;
+            var time = 0;
+            var isStarted = false;
 
-    async function predict() {
-        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
+            async function init() {
+                if(isStarted == false){
 
-        for (let i = 0; i < maxPredictions; i++) {
-            const classPrediction =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-            labelContainer.childNodes[i].innerHTML = classPrediction;
+                    var element = document.getElementById('start-button1');
+                    element.remove();
 
-            if(prediction[i].probability > 0.98 && time <= new Date().getTime()){
-                switch(prediction[i].className){
-                    case "ダブルハイセップス":
-                        await speak("肩にちっちゃい重機載せてんのかぁーい");
-                        time = new Date().getTime() + 3000;
-                        break;
-                    case "ラットスプレッド":
-                        await speak("デカ過ぎて固定資産税がかかりそうだな");
-                        time = new Date().getTime() + 3000;
-                        break;
-                    case "サイドチェスト": 
-                        await speak("はい、サイドーチェストぉー");
-                        time = new Date().getTime() + 3000;
-                        break;
-                    case "アドミナブルアンドサイ":
-                        await speak("腹筋 板チョコ バレンタイン");
-                        time = new Date().getTime() + 3000;
-                        break;
-                    default: 
-                        break;
+                    const modelURL = URL + "model.json";
+                    const metadataURL = URL + "metadata.json";
+
+                    model = await tmPose.load(modelURL, metadataURL);
+                    maxPredictions = model.getTotalClasses();
+
+                    // Convenience function to setup a webcam
+                    const size = 500;
+                    const flip = true; // whether to flip the webcam
+                    webcam = new tmPose.Webcam(size, size, flip); // width, height, flip
+                    await webcam.setup(); // request access to the webcam
+                    await webcam.play();
+                    window.requestAnimationFrame(loop);
+
+                    // append/get elements to the DOM
+                    const canvas = document.getElementById("canvas");
+                    canvas.width = size; canvas.height = size;
+                    ctx = canvas.getContext("2d");
+                    labelContainer = document.getElementById("label-container");
+                    for (let i = 0; i < maxPredictions; i++) { // and class labels
+                        labelContainer.appendChild(document.createElement("div"));
+                    }
+
+                    
+                    isStarted = true;
+                    
                 }
             }
-        }
 
-        drawPose(pose);
-    }
-
-    function drawPose(pose) {
-        if (webcam.canvas) {
-            ctx.drawImage(webcam.canvas, 0, 0);
-            if (pose) {
-                const minPartConfidence = 0.5;
-                tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
-                tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+            async function loop(timestamp) {
+                webcam.update(); // update the webcam frame
+                await predict();
+                window.requestAnimationFrame(loop);
             }
-        }
-    }
 
-    async function speak(text){
-        var speak   = new SpeechSynthesisUtterance();
-        speak.text  = text;
-        speak.rate  = 2; // 読み上げ速度 0.1-10 初期値:1 (倍速なら2, 半分の倍速なら0.5, )
-        speak.pitch = 0; // 声の高さ 0-2 初期値:1(0で女性の声) 
-        speak.lang  = 'ja-JP'; //(日本語:ja-JP, アメリカ英語:en-US, イギリス英語:en-GB, 中国語:zh-CN, 韓国語:ko-KR)
+            async function predict() {
+                const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+                const prediction = await model.predict(posenetOutput);
 
-        speechSynthesis.speak(speak);
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction =
+                        prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                    labelContainer.childNodes[i].innerHTML = classPrediction;
 
-    }
+                    if(prediction[i].probability > 0.98 && time <= new Date().getTime()){
+                        switch(prediction[i].className){
+                            case "ダブルハイセップス":
+                                await speak("肩にちっちゃい重機載せてんのかぁーい");
+                                time = new Date().getTime() + 3000;
+                                break;
+                            case "ラットスプレッド":
+                                await speak("デカ過ぎて固定資産税がかかりそうだな");
+                                time = new Date().getTime() + 3000;
+                                break;
+                            case "サイドチェスト": 
+                                await speak("はい、サイドーチェストぉー");
+                                time = new Date().getTime() + 3000;
+                                break;
+                            case "アドミナブルアンドサイ":
+                                await speak("腹筋 板チョコ バレンタイン");
+                                time = new Date().getTime() + 3000;
+                                break;
+                            default: 
+                                break;
+                        }
+                    }
+                }
+
+                drawPose(pose);
+            }
+
+            function drawPose(pose) {
+                if (webcam.canvas) {
+                    ctx.drawImage(webcam.canvas, 0, 0);
+                    if (pose) {
+                        const minPartConfidence = 0.5;
+                        tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                        tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+                    }
+                }
+            }
+
+            async function speak(text){
+                var speak   = new SpeechSynthesisUtterance();
+                speak.text  = text;
+                speak.rate  = 2; // 読み上げ速度 0.1-10 初期値:1 (倍速なら2, 半分の倍速なら0.5, )
+                speak.pitch = 0; // 声の高さ 0-2 初期値:1(0で女性の声) 
+                speak.lang  = 'ja-JP'; //(日本語:ja-JP, アメリカ英語:en-US, イギリス英語:en-GB, 中国語:zh-CN, 韓国語:ko-KR)
+
+                speechSynthesis.speak(speak);
+
+            }
 
 
-</script>
+        </script>
+    </body>
+</html>
+
+
+
