@@ -26,10 +26,10 @@
             let model, webcam, ctx, labelContainer, maxPredictions;
             var time = 0;
             var isStarted = false;
+            var lastCallID = 0;
 
             async function init() {
                 if(isStarted == false){
-
                     var element = document.getElementById('start-button1');
                     element.remove();
 
@@ -78,22 +78,38 @@
                     labelContainer.childNodes[i].innerHTML = classPrediction;
 
                     if(prediction[i].probability > 0.98 && time <= new Date().getTime()){
+
                         switch(prediction[i].className){
                             case "ダブルハイセップス":
-                                await speak("肩にちっちゃい重機載せてんのかぁーい");
-                                time = new Date().getTime() + 3000;
+                                if(lastCallID != 1){
+                                    await speak("肩にちっちゃい重機載せてんのかぁーい");
+                                    time = new Date().getTime() + 3000;
+                                    lastCallID = 1;
+                                }
                                 break;
                             case "ラットスプレッド":
-                                await speak("デカ過ぎて固定資産税がかかりそうだな");
-                                time = new Date().getTime() + 3000;
+                                if(lastCallID != 2){
+                                    await speak("デカ過ぎて固定資産税がかかりそうだな");
+                                    time = new Date().getTime() + 3000;
+                                    lastCallID = 2;
+                                }
                                 break;
                             case "サイドチェスト": 
-                                await speak("はい、サイドーチェストぉー");
-                                time = new Date().getTime() + 3000;
+                                if(lastCallID != 3){
+                                    await speak("はい、サイドーチェストぉー");
+                                    time = new Date().getTime() + 3000;
+                                    lastCallID = 3;
+                                }
                                 break;
                             case "アドミナブルアンドサイ":
-                                await speak("腹筋 板チョコ バレンタイン");
-                                time = new Date().getTime() + 3000;
+                                if(lastCallID != 4){
+                                    await speak("腹筋 板チョコ バレンタイン");
+                                    time = new Date().getTime() + 3000;
+                                    lastCallID = 4;
+                                }
+                                break;
+                            case "nutral":
+                                lastCallID = 0;
                                 break;
                             default: 
                                 break;
@@ -125,6 +141,7 @@
                 speechSynthesis.speak(speak);
 
             }
+
 
 
         </script>
